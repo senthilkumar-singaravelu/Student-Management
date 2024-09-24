@@ -18,63 +18,76 @@ public class StudentService {
     @Autowired
     private StudentRepository studentRepository;
 
-    // Injecting the StudentMapper
-
-    private final StudentMapper studentMapper = new StudentMapper(); // Initialize here
-
+    @Autowired
+    private StudentMapper studentMapper; // Use @Autowired for dependency injection
 
     // Save Student
     public StudentDto saveStudent(StudentDto studentDto) {
-        logger.info("Saving student: {}", studentDto.getStudentName());
-        
+        logger.info("Saving student: {}", studentDto.studentName()); // Use record accessor
+
         // Convert DTO to Entity using the mapper
         StudentEntity studentEntity = studentMapper.dtoToEntity(studentDto);
         
+        // Save the student entity
         StudentEntity savedEntity = studentRepository.save(studentEntity);
-        
-        // Convert back Entity to DTO
+
+        // Convert back Entity to DTO and return
+        logger.info("Student saved successfully: {}", savedEntity.getStudentId());
         return studentMapper.entityToDto(savedEntity);
     }
 
     // Get Student By ID
     public StudentDto getStudentById(int id) {
         logger.info("Fetching student with ID: {}", id);
-        
+
         // Fetch the entity
         StudentEntity studentEntity = studentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Student with ID " + id + " not found"));
-        
+                .orElseThrow(() -> {
+                    logger.error("Student with ID {} not found", id);
+                    return new ResourceNotFoundException("Student with ID " + id + " not found");
+                });
+
         // Convert Entity to DTO and return
+        logger.info("Fetched student: {}", studentEntity.getStudentId());
         return studentMapper.entityToDto(studentEntity);
     }
 
     // Delete Student By ID
     public void deleteStudentById(int id) {
         logger.info("Deleting student with ID: {}", id);
-        StudentEntity studentEntity = studentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Student with ID " + id + " not found"));
         
+        StudentEntity studentEntity = studentRepository.findById(id)
+                .orElseThrow(() -> {
+                    logger.error("Student with ID {} not found", id);
+                    return new ResourceNotFoundException("Student with ID " + id + " not found");
+                });
+
         studentRepository.delete(studentEntity);
+        logger.info("Student with ID {} deleted successfully", id);
     }
 
     // Update Student
     public StudentDto updateStudent(int id, StudentDto updatedStudentDto) {
         logger.info("Updating student with ID: {}", id);
-        
+
         // Fetch the existing student entity
         StudentEntity existingStudent = studentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Student with ID " + id + " not found"));
-        
+                .orElseThrow(() -> {
+                    logger.error("Student with ID {} not found", id);
+                    return new ResourceNotFoundException("Student with ID " + id + " not found");
+                });
+
         // Use the mapper to update fields from DTO
-        existingStudent.setStudentName(updatedStudentDto.getStudentName());
-        existingStudent.setGrade(updatedStudentDto.getGrade());
-        existingStudent.setMobileNumber(updatedStudentDto.getMobileNumber());
-        existingStudent.setSchoolName(updatedStudentDto.getSchoolName());
-        
+        existingStudent.setStudentName(updatedStudentDto.studentName());
+        existingStudent.setGrade(updatedStudentDto.grade());
+        existingStudent.setMobileNumber(updatedStudentDto.mobileNumber());
+        existingStudent.setSchoolName(updatedStudentDto.schoolName());
+
         // Save the updated entity
         StudentEntity updatedEntity = studentRepository.save(existingStudent);
-        
+
         // Convert updated entity back to DTO and return
+        logger.info("Student updated successfully: {}");
         return studentMapper.entityToDto(updatedEntity);
     }
 }
